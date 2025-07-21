@@ -17,7 +17,7 @@ Auto-Token Expiry & Refresh Logic
 ## 🛠 Getting Started
 Check package.json so that the proceess is smoother
 ```bash
-git clone https://github.com/imransyedhere/secureauthx-backend.git
+git clone https://github.com/syedimranhere/Secure-Auth-X-Frontend.git
 cd Secure-Auth-X-backend
 npm i
 npm run dev
