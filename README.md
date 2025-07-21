@@ -14,7 +14,14 @@ Protected Routes Middleware
 Scalable Project Structure (MVC + Services)
 
 Auto-Token Expiry & Refresh Logic
-
+## 🛠 Getting Started
+Check package.json so that the proceess is smoother
+```bash
+git clone https://github.com/imransyedhere/secureauthx-backend.git
+cd Secure-Auth-X-backend
+npm i
+npm run dev
+```
 Input Validation & Centralized Error Handling
 ## Coming Soon:
 ## Integration of Axios Interceptors on frontend to automatically handle expired tokens, retries, and error routing.
