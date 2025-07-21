@@ -1,4 +1,4 @@
-#SecureAuthX Backend is a high-security, scalable authentication system built using Node.js, Express, and MongoDB. Designed to power modern web applications with bulletproof login systems, token security, and scalable architecture.
+# SecureAuthX Backend is a high-security, scalable authentication system built using Node.js, Express, and MongoDB. Designed to power modern web applications with bulletproof login systems, token security, and scalable architecture.
 
 ## Features
 JWT-Based Authentication (Access & Refresh Tokens)
