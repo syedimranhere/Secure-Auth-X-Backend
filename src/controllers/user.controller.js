@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { uploadcloud } from "../utils/Cloudinary.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
 import {
   isValidUsername,
   isValidPassword,
@@ -91,6 +92,7 @@ export const RegisterUser = asyncHandler(async (req, res) => {
 // LOGIN USER
 export const LoginUser = asyncHandler(async (req, res) => {
   const { EmailorUsername, Password } = req.body;
+  const sessionId = uuidv4();
 
   if (!EmailorUsername || !Password) {
     throw new Apierror(400, "Email and Password are required");
@@ -109,22 +111,34 @@ export const LoginUser = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new Apierror(401, "Invalid email/username or password");
   }
-
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-    user._id
-  );
+  const payload = {
+    id: user._id,
+    jti: sessionId,
+    ip: req.ip,
+    agent: req.headers["user-agent"],
+  };
+  const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN, {
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+  });
+  const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN, {
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+  });
+  user.jti = sessionId; // Set the jti (JWT ID) to the session ID, this is imp for session hijacking problem
+  user.ip = req.ip; // Store the user's IP address
   user.refreshToken = refreshToken;
+  user.user_agent = req.headers["user-agent"]; // Store the user's user agent
+  await user.save();
 
   const options = {
     httpOnly: true,
-    secure: true,
-    sameSite: "Strict",
+    secure: false, // Set to true in production
+    sameSite: "None",
   };
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, options)
     .json({
       success: true,
       username: user.username,
@@ -132,15 +146,16 @@ export const LoginUser = asyncHandler(async (req, res) => {
       email: user.email,
     });
 });
-
 // LOGOUT USER
 // Clear his cookies
 export const LogoutUser = asyncHandler(async (req, res) => {
   // TODO: Invalidate token logic (clear cookie/token)
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: false,
+    sameSite: "None",
   };
+
   res.clearCookie("accessToken", options);
   res.clearCookie("refreshToken", options);
 
@@ -226,7 +241,7 @@ export const SendOtp = asyncHandler(async (req, res) => {
   await sendEmail({
     to: email,
     subject: "Your OTP For AuthX",
-    html: `<h2>Your OTP is ${genOTP}</h2><p>It expires in 10 minutes.</p>`,
+    html: `<h2 >Your OTP is ${genOTP}</h2><p>It expires in 10 minutes.</p>`,
   });
   return res
     .cookie("resetEmail", email, {
@@ -237,7 +252,7 @@ export const SendOtp = asyncHandler(async (req, res) => {
     .status(200)
     .json({
       success: true,
-      message: "OTP sent to your email successfully",
+      message: "OTP has been to your email successfully",
     });
 });
 
@@ -279,10 +294,50 @@ export const newPassword = asyncHandler(async (req, res) => {
   });
 });
 
-export const verifyCookie = (req, res) => {
-  if (!req.user) {
-    return res.status(401);
-  }
+export const refreshToken = async (req, res) => {
+  const { refreshToken } = req.cookies;
 
-  return res.status(200);
+  if (!refreshToken)
+    return res.status(401).json({ message: "No refresh token" });
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true, // set to false for local dev if needed
+      sameSite: "Lax",
+    });
+
+    res.status(200).json({ message: "Access token refreshed" });
+  } catch (err) {
+    res.status(403).json({ message: "Invalid refresh token" });
+  }
+};
+
+export const get_tokens = async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken)
+    return res.status(401).json({ message: "No refresh token" });
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true, // set to false for local dev if needed
+      sameSite: "Lax",
+    });
+
+    res.status(200).json({ message: "Access token refreshed" });
+  } catch (err) {
+    res.status(403).json({ message: "Invalid refresh token" });
+  }
 };

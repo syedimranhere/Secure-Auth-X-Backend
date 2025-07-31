@@ -6,16 +6,15 @@ import {
   LogoutUser,
   GetTokens,
   SendOtp,
-  verifyCookie,
+  refreshToken,
   VerifyOtp,
+  get_tokens,
   newPassword,
 } from "../controllers/user.controller.js";
 import { isAuthenticated } from "../middleware/Authentication.js";
 import { extractResetEmail } from "../middleware/getemail.js";
 import { loginLimiter } from "../middleware/rateLimit.js";
-// import isAuthenticated from "./src/middleware/Authentication.js"
 const UserRouter = Router();
-// UserRouter.use(isAuthenticated)
 
 UserRouter.post(
   "/register",
@@ -33,6 +32,7 @@ UserRouter.post("/send-otp", SendOtp);
 // now we will use middleware first to extract the email,which we sent in form of cookies inside
 UserRouter.post("/verifyotp", extractResetEmail, VerifyOtp);
 UserRouter.post("/reset-password", extractResetEmail, newPassword);
-UserRouter.post("/get-access", isAuthenticated, verifyCookie);
+UserRouter.get("/verify-token", isAuthenticated, refreshToken);
+UserRouter.get("/get-token", isAuthenticated, get_tokens);
 
 export { UserRouter };

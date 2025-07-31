@@ -39,6 +39,18 @@ const userSchema = new Schema(
     otpExpiry: {
       type: Date,
     },
+    jti: {
+      type: String,
+      unique: true,
+    },
+    ip: {
+      type: String,
+      unique: true,
+    },
+    user_agent: {
+      type: String,
+      unique: true,
+    },
   },
   {
     timestamps: true,

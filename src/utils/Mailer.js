@@ -1,21 +1,20 @@
 import nodemailer from "nodemailer";
 
-export const sendEmail = async ({ to, subject, html} ) => {
+export const sendEmail = async ({ to, subject, html }) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
   });
 
-
   const mailOptions = {
-    from: `"SecureAuth X" <${process.env.MAIL_USER}>`,
+    from: `"SecureAuth-X" <${process.env.SMTP_USER}>`,
     to,
     subject,
-    html, // you send full HTML string for design
+    html,
   };
 
   await transporter.sendMail(mailOptions);
-};1
+};

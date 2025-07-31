@@ -1,17 +1,18 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import mongoSanitize from "express-mongo-sanitize";
 
 const app = express();
 // server started
 app.use(
   cors({
-    origin: "*",
+    // you may change the origin, i chose * for testing
+    origin: "http://localhost:6999", // only allow this origin
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 app.use(cookieParser({}));
 

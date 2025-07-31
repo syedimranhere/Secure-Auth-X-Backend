@@ -1,5 +1,3 @@
-// take tokens and do JWT VERIFY
-// this will be used to authenticate the user when loggin out
 import jwt from "jsonwebtoken";
 import { Apierror } from "../utils/ErrorApi.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
@@ -23,7 +21,6 @@ export const isAuthenticated = asyncHandler(async (req, res, next) => {
       throw new Apierror(401, "User not found ❗");
     }
     req.user = user;
-
     next();
   } catch (error) {
     throw new Apierror(401, error.message || "AUTHENTICATION FAILED ❗");
