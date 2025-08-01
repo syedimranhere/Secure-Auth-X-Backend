@@ -120,6 +120,12 @@ export const LoginUser = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
   );
+  const ip =
+    req.headers["x-forwarded-for"]?.split(",")[0] ||
+    req.connection.remoteAddress;
+  const userAgent = req.headers["user-agent"];
+  user.user_agent = userAgent;
+  user.ip = ip;
   user.refreshToken = refreshToken; // Update the refresh token in the database
   await user.save();
 
@@ -250,6 +256,13 @@ export const verifyAccess = async (req, res) => {
       return res.status(403).json({ message: "Invalid access token" });
     }
 
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.connection.remoteAddress;
+    const userAgent = req.headers["user-agent"];
+    if (user.ip !== ip || user.user_agent !== userAgent) {
+      return res.status(403).json({ message: "Session not yours" });
+    }
     // FIXED: Return actual user data instead of just a message
     res.status(200).json({
       success: true,
@@ -287,6 +300,13 @@ export const GetTokens = async (req, res) => {
     const { accessToken, refreshToken2 } = await generateAccessAndRefreshTokens(
       user._id
     );
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.connection.remoteAddress;
+    const userAgent = req.headers["user-agent"];
+    if (user.ip !== ip || user.user_agent !== userAgent) {
+      return res.status(403).json({ message: "Session not yours" });
+    }
     user.refreshToken = refreshToken2; // Update the refresh token in the database
     await user.save();
     res
