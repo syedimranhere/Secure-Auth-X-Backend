@@ -11,6 +11,11 @@ import {
 } from "../utils/credentialValidator.js";
 import { sendEmail } from "../utils/Mailer.js";
 
+const options = {
+  httpOnly: true,
+  // secure: process.env.NODE_ENV === "production", // Set to true in production
+  // sameSite: "None", // Adjust based on your requirements
+};
 export const generateAccessAndRefreshTokens = async (userId) => {
   const userDoc = await User.findById(userId)
     // 🧠 Don’t select out -refreshToken if you're about to update it
@@ -18,7 +23,7 @@ export const generateAccessAndRefreshTokens = async (userId) => {
   if (!userDoc) {
     throw new Apierror(404, "User not found ❗");
   }
-  //user object itself has methods ( of passchekc and tokens)
+  //user object itself has methods ( of passcheck and tokens)
   const accessToken = await userDoc.generateAccessToken();
   const refreshToken = await userDoc.generateRefreshToken();
   //but we want refresh token to be stored in DB
@@ -111,29 +116,34 @@ export const LoginUser = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new Apierror(401, "Invalid email/username or password");
   }
-  const payload = {
-    id: user._id,
-    jti: sessionId,
-    ip: req.ip,
-    agent: req.headers["user-agent"],
-  };
-  const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-  });
-  const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN, {
-    expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-  });
-  user.jti = sessionId; // Set the jti (JWT ID) to the session ID, this is imp for session hijacking problem
-  user.ip = req.ip; // Store the user's IP address
-  user.refreshToken = refreshToken;
-  user.user_agent = req.headers["user-agent"]; // Store the user's user agent
-  await user.save();
+  // const payload = {
+  //   id: user._id,
+  //   jti: sessionId,
+  //   ip: req.ip,
+  //   agent: req.headers["user-agent"],
+  // };
+  // const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN, {
+  //   expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+  // });
+  // const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN, {
+  //   expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+  // });
+  // user.jti = sessionId; // Set the jti (JWT ID) to the session ID, this is imp for session hijacking problem
+  // user.ip = req.ip; // Store the user's IP address
+  // user.refreshToken = refreshToken;
+  // user.user_agent = req.headers["user-agent"]; // Store the user's user agent
+  // await user.save();
 
-  const options = {
-    httpOnly: true,
-    secure: false, // Set to true in production
-    sameSite: "None",
-  };
+  // const options = {
+  //   httpOnly: true,
+  //   secure: false, // Set to true in production
+  //   sameSite: "None",
+  // };
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+  user.refreshToken = refreshToken; // Update the refresh token in the database
+  await user.save();
 
   return res
     .status(200)
@@ -149,13 +159,7 @@ export const LoginUser = asyncHandler(async (req, res) => {
 // LOGOUT USER
 // Clear his cookies
 export const LogoutUser = asyncHandler(async (req, res) => {
-  // TODO: Invalidate token logic (clear cookie/token)
-  const options = {
-    httpOnly: true,
-    secure: false,
-    sameSite: "None",
-  };
-
+  // Clear cookies first
   res.clearCookie("accessToken", options);
   res.clearCookie("refreshToken", options);
 
@@ -171,49 +175,6 @@ export const LogoutUser = asyncHandler(async (req, res) => {
 
   return res.status(200).json({ message: "Logged out successfully" });
 });
-
-export const GetTokens = asyncHandler(async (req, res) => {
-  // TODO: Invalidate token logic (clear cookie/token)
-  //  verify the tokens
-  const token = req.cookies?.refreshToken;
-  if (!token) {
-    throw new Apierror(400, "Not Authenticated");
-  }
-
-  const rese = jwt.verify(token, process.env.REFRESH_TOKEN);
-  if (!rese) {
-    return res.status(401).json({
-      message: "Invalid Token",
-    });
-  }
-  const USER = User.findById(token.id);
-  if (USER.refreshToken != token) {
-    return res.status(401).json({
-      message: "Refresh Token Invalid",
-    });
-  }
-  const isPresent = await User.findById(rese.id);
-
-  if (!isPresent) {
-    throw new Apierror(401, "User Not found");
-  }
-
-  const { accessToken, refreshToken } = generateAccessAndRefreshTokens(rese.id);
-  USER.refreshToken = refreshToken;
-  await USER.save();
-  const options = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Strict",
-  };
-
-  return res
-    .status(200)
-    .cookie("refreshToken", refreshToken, options)
-    .cookie("accessToken", accessToken, options)
-    .json({ message: "New AccessToken Granted" });
-});
-
 //here we will be navigated if we click on forgetPassword
 
 const generateOtp = () => {
@@ -294,50 +255,57 @@ export const newPassword = asyncHandler(async (req, res) => {
   });
 });
 
-export const refreshToken = async (req, res) => {
-  const { refreshToken } = req.cookies;
+export const verifyAccess = async (req, res) => {
+  const { accessToken } = req.cookies;
 
-  if (!refreshToken)
-    return res.status(401).json({ message: "No refresh token" });
+  if (!accessToken) return res.status(401).json({ message: "No access token" });
 
   try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
-    });
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true, // set to false for local dev if needed
-      sameSite: "Lax",
-    });
-
-    res.status(200).json({ message: "Access token refreshed" });
+    const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN);
+    if (!decoded || !decoded.id) {
+      return res.status(403).json({ message: "Invalid access token" });
+    }
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(403).json({ message: "Invalid access token" });
+    }
+    res.status(200).json({ message: "Tokens Valid" });
   } catch (err) {
-    res.status(403).json({ message: "Invalid refresh token" });
+    res.status(403).json({ message: "Invalid access token" });
   }
 };
-
-export const get_tokens = async (req, res) => {
+export const GetTokens = async (req, res) => {
   const { refreshToken } = req.cookies;
 
-  if (!refreshToken)
-    return res.status(401).json({ message: "No refresh token" });
-
+  if (!refreshToken) {
+    return res.status(401).json({ message: "No refresh token provided" });
+  }
   try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
-    });
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    if (!decoded || !decoded.id) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+    if (user.refreshToken !== refreshToken) {
+      return res
+        .status(403)
+        .json({ message: "Token reuse detected. Possible session hijack!" });
+    }
 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true, // set to false for local dev if needed
-      sameSite: "Lax",
-    });
-
-    res.status(200).json({ message: "Access token refreshed" });
-  } catch (err) {
-    res.status(403).json({ message: "Invalid refresh token" });
+    const { accessToken, refreshToken2 } = await generateAccessAndRefreshTokens(
+      user._id
+    );
+    user.refreshToken = refreshToken2; // Update the refresh token in the database
+    await user.save();
+    res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken2, options)
+      .json({ message: "Tokens Generated" });
+  } catch (error) {
+    res.status(403).json({ message: "Invalid Refresh Token" });
   }
 };
