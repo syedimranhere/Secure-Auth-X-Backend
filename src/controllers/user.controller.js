@@ -14,7 +14,7 @@ import { sendEmail } from "../utils/Mailer.js";
 const options = {
   httpOnly: true,
   // secure: process.env.NODE_ENV === "production", // Set to true in production
-  // sameSite: "None", // Adjust based on your requirements
+  sameSite: "None", // Adjust based on your requirements
 };
 export const generateAccessAndRefreshTokens = async (userId) => {
   const userDoc = await User.findById(userId)
@@ -116,29 +116,7 @@ export const LoginUser = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new Apierror(401, "Invalid email/username or password");
   }
-  // const payload = {
-  //   id: user._id,
-  //   jti: sessionId,
-  //   ip: req.ip,
-  //   agent: req.headers["user-agent"],
-  // };
-  // const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN, {
-  //   expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-  // });
-  // const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN, {
-  //   expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-  // });
-  // user.jti = sessionId; // Set the jti (JWT ID) to the session ID, this is imp for session hijacking problem
-  // user.ip = req.ip; // Store the user's IP address
-  // user.refreshToken = refreshToken;
-  // user.user_agent = req.headers["user-agent"]; // Store the user's user agent
-  // await user.save();
 
-  // const options = {
-  //   httpOnly: true,
-  //   secure: false, // Set to true in production
-  //   sameSite: "None",
-  // };
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
   );
@@ -254,7 +232,6 @@ export const newPassword = asyncHandler(async (req, res) => {
     success: true,
   });
 });
-
 export const verifyAccess = async (req, res) => {
   const { accessToken } = req.cookies;
 
@@ -265,11 +242,19 @@ export const verifyAccess = async (req, res) => {
     if (!decoded || !decoded.id) {
       return res.status(403).json({ message: "Invalid access token" });
     }
+
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(403).json({ message: "Invalid access token" });
     }
-    res.status(200).json({ message: "Tokens Valid" });
+
+    // FIXED: Return actual user data instead of just a message
+    res.status(200).json({
+      message: "Tokens Valid",
+      username: user.username,
+      fullname: user.fullname,
+      email: user.email,
+    });
   } catch (err) {
     res.status(403).json({ message: "Invalid access token" });
   }
