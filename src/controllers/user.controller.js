@@ -13,8 +13,8 @@ import { sendEmail } from "../utils/Mailer.js";
 
 const options = {
   httpOnly: true,
-  // secure: process.env.NODE_ENV === "production", // Set to true in production
-  sameSite: "None", // Adjust based on your requirements
+  secure: process.env.NODE_ENV === "production", // Only secure in production
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // Lax for development
 };
 export const generateAccessAndRefreshTokens = async (userId) => {
   const userDoc = await User.findById(userId)
@@ -97,7 +97,7 @@ export const RegisterUser = asyncHandler(async (req, res) => {
 // LOGIN USER
 export const LoginUser = asyncHandler(async (req, res) => {
   const { EmailorUsername, Password } = req.body;
-  const sessionId = uuidv4();
+  // const sessionId = uuidv4();
 
   if (!EmailorUsername || !Password) {
     throw new Apierror(400, "Email and Password are required");
@@ -129,9 +129,11 @@ export const LoginUser = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .json({
       success: true,
-      username: user.username,
-      fullname: user.fullname,
-      email: user.email,
+      user: {
+        username: user.username,
+        fullname: user.fullname,
+        email: user.email,
+      },
     });
 });
 // LOGOUT USER
@@ -250,10 +252,12 @@ export const verifyAccess = async (req, res) => {
 
     // FIXED: Return actual user data instead of just a message
     res.status(200).json({
-      message: "Tokens Valid",
-      username: user.username,
-      fullname: user.fullname,
-      email: user.email,
+      success: true,
+      user: {
+        username: user.username,
+        fullname: user.fullname,
+        email: user.email,
+      },
     });
   } catch (err) {
     res.status(403).json({ message: "Invalid access token" });
