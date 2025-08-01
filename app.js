@@ -7,7 +7,7 @@ const app = express();
 app.use(
   cors({
     // you may change the origin, i chose * for testing
-    origin: "http://localhost:6999", // only allow this origin
+    origin: "https://secure-auth-x-frontend.vercel.app", // only allow this origin
     credentials: true,
     optionsSuccessStatus: 200,
   })
