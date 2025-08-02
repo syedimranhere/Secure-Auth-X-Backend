@@ -4,7 +4,8 @@ export const extractResetEmail = (req, res, next) => {
   console.log("cookies email check");
   if (!email) {
     return res.status(401).json({
-      em: email,
+      email,
+      message2: "ahahah",
       success: false,
       message: "Session expired. Restart flow.",
     });
