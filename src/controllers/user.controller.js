@@ -266,7 +266,7 @@ export const verifyAccess = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(406).json({ message: "Invalid access token" });
+    res.status(40).json({ message: "Invalid access token" });
   }
 };
 export const GetTokens = async (req, res) => {
