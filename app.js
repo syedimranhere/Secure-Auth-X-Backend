@@ -9,7 +9,6 @@ app.use(
     // you may change the origin, i chose * for testing
     origin: "https://secure-auth-x-frontend.vercel.app", // only allow this origin
     credentials: true,
-    optionsSuccessStatus: 200,
   })
 );
 app.use(express.json({ limit: "10mb" }));

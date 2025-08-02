@@ -13,8 +13,8 @@ import { sendEmail } from "../utils/Mailer.js";
 
 const options = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // Only secure in production
-  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // Lax for development
+  secure: true,
+  sameSite: "None", // THIS IS MANDATORY FOR CROSS-ORIGIN COOKIES!
 };
 export const generateAccessAndRefreshTokens = async (userId) => {
   const userDoc = await User.findById(userId)
