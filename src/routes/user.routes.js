@@ -32,5 +32,5 @@ UserRouter.post("/send-otp", SendOtp);
 // now we will use middleware first to extract the email,which we sent in form of cookies inside
 UserRouter.post("/verifyotp", extractResetEmail, VerifyOtp);
 UserRouter.post("/reset-password", extractResetEmail, newPassword);
-UserRouter.get("/verify-access", isAuthenticated, verifyAccess);
+UserRouter.get("/verify-access", verifyAccess);
 export { UserRouter };
