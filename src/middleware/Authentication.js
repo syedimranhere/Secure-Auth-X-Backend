@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { Apierror } from "../utils/ErrorApi.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { User } from "../models/user.model.js";
-export const isAuthenticated = asyncHandler(async (req, res, next) => {
+export const isAuthenticated = asyncHandler(async (req, next) => {
   try {
     const cookieToken = req.cookies?.accessToken;
     if (!cookieToken) {

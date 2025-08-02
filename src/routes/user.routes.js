@@ -25,7 +25,7 @@ UserRouter.post(
   RegisterUser
 );
 UserRouter.post("/login", loginLimiter, LoginUser);
-UserRouter.post("/logout", isAuthenticated, LogoutUser);
+UserRouter.post("/logout", LogoutUser);
 UserRouter.get("/refresh", GetTokens);
 // abovs cant have isAuth, because no acces cookies to confirm, if refreshToken also expires we head to LOGIN
 UserRouter.post("/send-otp", SendOtp);
