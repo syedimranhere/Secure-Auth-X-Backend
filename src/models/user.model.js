@@ -41,11 +41,9 @@ const userSchema = new Schema(
     },
     ip: {
       type: String,
-      unique: true,
     },
     user_agent: {
       type: String,
-      unique: true,
     },
   },
   {
