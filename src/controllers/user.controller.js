@@ -199,20 +199,30 @@ export const SendOtp = asyncHandler(async (req, res) => {
 export const VerifyOtp = asyncHandler(async (req, res) => {
   const { otp } = req.body;
   const email = req.resetEmail;
+  console.log("here 1");
   const USER = await User.findOne({ email });
   if (!USER) {
     return res.status(401).json({ mess: "User Not Found" });
   }
+  console.log("here 1.5");
+  if (!USER.otp || !USER.otpExpiry) {
+    return res.status(401).json({ mess: "OTP not found or expired" });
+  }
+  console.log("here 1.6");
   if (USER.otpExpiry < Date.now()) {
     return res.status(401).json({ mess: "OTP Expired" });
   }
+  console.log("here 1.7");
 
   const userotp = USER.otp;
   const result = await bcrypt.compare(otp, userotp);
+  console.log("here 1.8");
 
   if (!result) {
     return res.status(401).json({ mess: "OTP is Invalid" });
   }
+  console.log("here 1.9");
+
   //now everything is good to go
   return res.status(200).json({
     success: true,
