@@ -4,7 +4,6 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { uploadcloud } from "../utils/Cloudinary.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { v4 as uuidv4 } from "uuid";
 import {
   isValidUsername,
   isValidPassword,
@@ -15,6 +14,7 @@ const options = {
   httpOnly: true,
   secure: true,
   sameSite: "None", // THIS IS MANDATORY FOR CROSS-ORIGIN COOKIES!
+  expiry: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
 };
 export const generateAccessAndRefreshTokens = async (userId) => {
   const userDoc = await User.findById(userId)
@@ -30,9 +30,6 @@ export const generateAccessAndRefreshTokens = async (userId) => {
   userDoc.refreshToken = refreshToken;
   //also save it, as we are updating the user document ( take time )
   await userDoc.save();
-
-  //its better to have options in a single object
-
   return { accessToken, refreshToken };
 };
 

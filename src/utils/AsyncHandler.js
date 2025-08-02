@@ -5,6 +5,7 @@ const asyncHandler = (fn) => {
       await fn(req, res, next);
     } catch (error) {
       // If an error occurs, pass it to Express's error handler
+      console.error("AsyncHandler caught an error:", error);
       next(error);
     }
   };
