@@ -10,7 +10,6 @@ import {
   newPassword,
   GetTokens,
 } from "../controllers/user.controller.js";
-import { isAuthenticated } from "../middleware/Authentication.js";
 import { extractResetEmail } from "../middleware/getemail.js";
 import { loginLimiter } from "../middleware/rateLimit.js";
 
