@@ -142,20 +142,11 @@ export const LoginUser = asyncHandler(async (req, res) => {
 // LOGOUT USER
 // Clear his cookies
 export const LogoutUser = asyncHandler(async (req, res) => {
-  // Clear cookies first
-  const token = req.cookies?.accessToken;
-  if (!token) {
-    return res.status(400).json({ message: "No active session found" });
-  }
-  const id = jwt.verify(token, process.env.ACCESS_TOKEN).id;
-  if (!id) {
-    return res.status(400).json({ message: "Invalid session" });
-  }
   res.clearCookie("accessToken", options);
   res.clearCookie("refreshToken", options);
 
   // Clear refreshToken from the user document
-  const USER = await User.findById(id);
+  const USER = await User.findById(req.user._id);
   if (!USER) {
     throw new Apierror(400, "User not found");
   }

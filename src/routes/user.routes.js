@@ -12,6 +12,7 @@ import {
 } from "../controllers/user.controller.js";
 import { extractResetEmail } from "../middleware/getemail.js";
 import { loginLimiter } from "../middleware/rateLimit.js";
+import { isAuthenticated } from "../middleware/Authentication.js";
 
 const UserRouter = Router();
 
@@ -24,7 +25,7 @@ UserRouter.post(
   RegisterUser
 );
 UserRouter.post("/login", loginLimiter, LoginUser);
-UserRouter.post("/logout", LogoutUser);
+UserRouter.post("/logout", isAuthenticated, LogoutUser);
 UserRouter.get("/refresh", GetTokens);
 // abovs cant have isAuth, because no acces cookies to confirm, if refreshToken also expires we head to LOGIN
 UserRouter.post("/send-otp", SendOtp);
