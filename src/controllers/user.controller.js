@@ -236,17 +236,17 @@ export const newPassword = asyncHandler(async (req, res) => {
 export const verifyAccess = async (req, res) => {
   const { accessToken } = req.cookies;
 
-  if (!accessToken) return res.status(401).json({ message: "No access token" });
+  if (!accessToken) return res.status(406).json({ message: "No access token" });
 
   try {
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN);
     if (!decoded || !decoded.id) {
-      return res.status(403).json({ message: "Invalid access token" });
+      return res.status(406).json({ message: "Invalid access token" });
     }
 
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(403).json({ message: "Invalid access token" });
+      return res.status(406).json({ message: "Invalid access token" });
     }
 
     const ip =
@@ -254,7 +254,7 @@ export const verifyAccess = async (req, res) => {
       req.connection.remoteAddress;
     const userAgent = req.headers["user-agent"];
     if (user.ip !== ip || user.user_agent !== userAgent) {
-      return res.status(403).json({ message: "Session not yours" });
+      return res.status(406).json({ message: "Session not yours" });
     }
     // FIXED: Return actual user data instead of just a message
     res.status(200).json({
@@ -266,7 +266,7 @@ export const verifyAccess = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(403).json({ message: "Invalid access token" });
+    res.status(406).json({ message: "Invalid access token" });
   }
 };
 export const GetTokens = async (req, res) => {
