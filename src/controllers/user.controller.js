@@ -12,6 +12,7 @@ import { sendEmail } from "../utils/Mailer.js";
 
 const options = {
   httpOnly: true,
+  httpOnly: true,
   secure: true,
   sameSite: "None", // imp for cross origin
   expiry: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
