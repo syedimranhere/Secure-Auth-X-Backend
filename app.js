@@ -3,11 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 const app = express();
-// server started
+
 app.use(
   cors({
-    // you may change the origin, i chose * for testing
-    origin: "https://secure-auth-x-frontend.vercel.app", // only allow this origin
+    origin: "https://secure-auth-x-frontend.vercel.app",
     credentials: true,
   })
 );

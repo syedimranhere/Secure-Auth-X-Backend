@@ -28,7 +28,7 @@ const uploadcloud = async function (path) {
 
     return res; // Cloudinary returns full metadata including .url
   } catch (error) {
-    console.log("❌ Cloudinary upload failed:", error.message);
+    console.log(" Cloudinary upload failed:", error.message);
 
     // Still clean up local file if it exists
     if (fs.existsSync(path)) {
