@@ -1,11 +1,10 @@
 // middleware/extractResetEmail.js
 export const extractResetEmail = (req, res, next) => {
+  console.log(req.cookies);
   const email = req.cookies?.resetEmail;
   console.log("cookies email check");
   if (!email) {
     return res.status(401).json({
-      email,
-      message2: "ahahah",
       success: false,
       message: "Session expired. Restart flow.",
     });

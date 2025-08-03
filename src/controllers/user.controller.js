@@ -185,7 +185,9 @@ export const SendOtp = asyncHandler(async (req, res) => {
   });
   return res
     .cookie("resetEmail", email, {
-      options,
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
     })
     .status(200)
     .json({
